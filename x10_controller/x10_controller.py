@@ -1,11 +1,14 @@
 #!/usr/bin/env python3.5
 
+import json
 import argparse
+import requests
 import signal
 import sys
 import os
 import logging
 import time
+from subprocess import call
 
 def get_logger_name():
     return 'x10_controller'
@@ -73,12 +76,16 @@ class X10Controller:
         except:
             print("failed to grab lock file, bailing...")
             sys.exit(0)
- 
+
         self._setup_signals(lockf)
         log = self._setup_logger(logf)
     
         log("x10 controller daemon started.")
-        self.do_something(log)
+        try:
+            self.do_something(log)
+        except:
+            log("couldn't find heyu binary. Shutting down")
+            self._shut_down(lockf,-1)
 
     def _setup_logger(self, logf):
         '''
@@ -122,8 +129,15 @@ class X10Controller:
         '''
         while True:
             #fetch state that is supposed to be given.
+            api_url = "https://api.martinezmanor.com/api/v1/record/x10/get_state"
+            api_url = "http://192.168.36.220:8888/api/v1/record/x10/get_state"
+        
+            response = requests.get(api_url)
+            resp_dict = response.json()
+            for channel in resp_dict['channels']:
+                call(["heyu ",channel, resp_dict[channel]])
+                time.sleep(5)
             #then make it so
-            time.sleep(5)
             
 
 if __name__ == "__main__":
@@ -135,4 +149,3 @@ if __name__ == "__main__":
     args = parser.parse_args()
     x10 = X10Controller()
     x10.start_daemon(pidf=args.pid_file, logf=args.log_file, lockf=args.lock_file)
-
