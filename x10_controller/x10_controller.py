@@ -1,4 +1,4 @@
-#!/usr/bin/env python3.5
+#!/usr/bin/env python3
 
 import json
 import argparse
@@ -8,7 +8,7 @@ import sys
 import os
 import logging
 import time
-from subprocess import call
+from subprocess import check_call
 
 def get_logger_name():
     return 'x10_controller'
@@ -83,8 +83,8 @@ class X10Controller:
         log("x10 controller daemon started.")
         try:
             self.do_something(log)
-        except:
-            log("couldn't find heyu binary. Shutting down")
+        except Exception as e:
+            log("couldn't find heyu binary. Shutting down. Error was :" + str(e))
             self._shut_down(lockf,-1)
 
     def _setup_logger(self, logf):
@@ -130,13 +130,12 @@ class X10Controller:
         while True:
             #fetch state that is supposed to be given.
             api_url = "https://api.martinezmanor.com/api/v1/record/x10/get_state"
-            api_url = "http://192.168.36.220:8888/api/v1/record/x10/get_state"
         
             response = requests.get(api_url)
             resp_dict = response.json()
             for channel in resp_dict['channels']:
-                call(["heyu ",channel, resp_dict[channel]])
-                time.sleep(5)
+                check_call(["/usr/local/bin/heyu", "-c", "/root/.heyu/x10config", resp_dict[channel], channel  ])
+                time.sleep(2)
             #then make it so
             
 

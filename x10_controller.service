@@ -1,0 +1,14 @@
+[Unit]
+Description=regular system to run in background
+Documentation=https://www.martinezmanor.com/www/trip_plan/show_map
+
+[Service]
+EnvironmentFile=-/etc/default/x10_controller
+ExecStart=/var/lib/x10_controller/x10_controller.py $EXTRA_OPTS
+IgnoreSIGPIPE=false
+KillMode=process
+Restart=always
+
+[Install]
+WantedBy=multi-user.target
+
